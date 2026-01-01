@@ -1,7 +1,9 @@
 import numpy as np
 from utils import get_accuracy
-
-class SimpleHopfieldNetwork:
+from BaseNetwork import BaseNetwork
+from SimpleHopefieldRestoration import SimpleHopefieldRestoration, State
+import matplotlib.pyplot as plt
+class SimpleHopfieldNetwork(BaseNetwork):
     """
     A simple NxN Hopfield network
     """
@@ -18,6 +20,7 @@ class SimpleHopfieldNetwork:
         np.fill_diagonal(self.W, 0)
         # We normalize the weights to keep the field values manageable
         self.W /= self.n 
+        return self.W
 
     def energy(self, state):
         """
@@ -30,31 +33,11 @@ class SimpleHopfieldNetwork:
         return np.dot(self.W, state)
 
     def restore_memory(self, input_state, original_state, steps=50):
-        """
-        Restores a memory from a given input state
-        """
-        s = input_state.copy()
-        
-        # We save snapshots at specific intervals to make a 'movie'
-        snapshots = [0, 30, int(steps*self.n/2), steps*self.n - 1]
-        saved_states = []
-        energies = []
-        accuracies = []
-        
-        print("Dreaming restoration...")
-        for i in range(steps * self.n):
-            # Asynchronous Update
+        restoration = SimpleHopefieldRestoration(self.W, original_state, input_state)
+        for i in range(steps*self.n):
             idx = np.random.randint(self.n)
-            field = np.dot(self.W[idx], s)
-            s[idx] = 1 if field >= 0 else -1
-            accuracy = get_accuracy(original_state, s)
-            accuracies.append(accuracy)
-            
-            # Record Energy
-            if i % 500 == 0:
-                energies.append(self.energy(s))
-            
-            # Save Snapshot if it's time
-            if i in snapshots or i == 0:
-                saved_states.append(s.copy())
-        return s, saved_states, energies, accuracies
+            new_value = restoration.states[-1].value.copy()
+            field = np.dot(self.W[idx], new_value)
+            new_value[idx] = 1 if field >= 0 else -1
+            restoration.add_state(new_value)
+        return restoration

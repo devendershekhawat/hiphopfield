@@ -171,4 +171,5 @@ def get_random_binary_images(size=32, n=5):
         images: numpy array of shape (n, size, size)
     """
     images = np.random.choice([-1, 1], size=(n, size, size))
-    return images
+    flattened_images = [image.flatten() for image in images]
+    return flattened_images

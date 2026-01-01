@@ -7658,6 +7658,37 @@ Let's break down this formula to see why it works:</p>
 </div>
 </div>
 </div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=27a072cf">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="The-%22Ghost%22-Memories-(Spurious-States)">The "Ghost" Memories (Spurious States)<a class="anchor-link" href="#The-%22Ghost%22-Memories-(Spurious-States)">¶</a></h4><p>While the Hopfield Network is powerful, it has a haunting side effect. Sometimes, the network converges to a stable state that you <strong>never taught it</strong>. These are called <strong>Spurious States</strong> (or "Ghost Memories").</p>
+<p>In our energy landscape analogy, these are "accidental valleys"—places where the ball gets stuck, even though you never dug a hole there.</p>
+<p>There are two main types of ghosts in the machine:</p>
+<h5 id="1.-The-%22Anti-Memory%22-(Symmetry)">1. The "Anti-Memory" (Symmetry)<a class="anchor-link" href="#1.-The-%22Anti-Memory%22-(Symmetry)">¶</a></h5><p>If the network learns a pattern (e.g., an image of a black circle on white), it <em>automatically</em> learns the exact inverse (a white circle on black).</p>
+<p><strong>The Math:</strong>
+Look at the energy equation again:
+$$E = -\frac{1}{2} \sum_{i,j} w_{ij} s_i s_j$$</p>
+<p>If you flip the sign of <em>every</em> neuron (change every $+1$ to $-1$ and every $-1$ to $+1$), the product $s_i s_j$ remains exactly the same:
+$$(-s_i) \times (-s_j) = s_i s_j$$</p>
+<p>Because the energy value doesn't change, the "Anti-Memory" has the exact same depth as the original memory. It is a mathematical mirror image.</p>
+<h5 id="2.-The-%22Frankenstein%22-Memory-(Mixture-States)">2. The "Frankenstein" Memory (Mixture States)<a class="anchor-link" href="#2.-The-%22Frankenstein%22-Memory-(Mixture-States)">¶</a></h5><p>If you teach the network too many patterns, the valleys in the landscape start to interfere with each other.</p>
+<p>Imagine you teach it a "Dog" and a "Cat." Ideally, these are two distinct valleys separated by a hill. But if the patterns share too many active neurons (correlation), the valleys might merge. The network might settle in a shallow valley right in the middle—a stable state that looks like a weird, logical mixture of both patterns.</p>
+<p><img alt="" src="./lab_files/ghosts.png"/></p>
+<ul>
+<li><strong>Why it happens:</strong> The network is trying to satisfy the constraints of Pattern A <em>and</em> Pattern B simultaneously, getting stuck in a local minimum where it partially satisfies both but fully satisfies neither.</li>
+</ul>
+<h4 id="3.-The-Capacity-Limit">3. The Capacity Limit<a class="anchor-link" href="#3.-The-Capacity-Limit">¶</a></h4><p>These ghosts become much more frequent if you overload the network. A standard Hopfield network has a severe storage limit.</p>
+<ul>
+<li><strong>The Rule of Thumb:</strong> You can only store approximately <strong>0.14N</strong> patterns (where N is the number of neurons) before the "ghosts" take over and the system loses its ability to recall anything correctly. How we came to this number is out of scope for this essay but remember that it is not a magic number, but derived from the rules of statistics.</li>
+<li>For a 100-neuron network, you can only safely store about 14 distinct memories. Beyond that, the energy landscape becomes too rugged, full of false valleys and confusion.</li>
+</ul>
+</div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=a77ae907">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">

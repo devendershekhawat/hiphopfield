@@ -129,6 +129,11 @@ These ghosts become much more frequent if you overload the network. A standard H
 * **The Rule of Thumb:** You can only store approximately **0.14N** patterns (where N is the number of neurons) before the "ghosts" take over and the system loses its ability to recall anything correctly. How we came to this number is out of scope for this essay but remember that it is not a magic number, but derived from the rules of statistics.
 * For a 100-neuron network, you can only safely store about 14 distinct memories. Beyond that, the energy landscape becomes too rugged, full of false valleys and confusion.
 
+#### Overcoming the limits
+This concept of energy landscape and the method of retrieving memories was descriped in Hopfields 1982 paper [Neural networks and physical systems with emergent collective computational abilities.](https://www.pnas.org/doi/10.1073/pnas.79.8.2554) As we saw this model has limits for the number of memories that can be learned.
+
+In 2020, John Hopfield published another paper [LARGE ASSOCIATIVE MEMORY PROBLEM IN NEUROBIOLOGY AND MACHINE LEARNING](https://arxiv.org/pdf/2008.06996) where he proposed a ground breaking solution that exponentially increased the memory limit. We call it a Modern Hopfield Network
+
 
 ```python
 import numpy as np
@@ -196,7 +201,7 @@ plot_selected_arts(selected_arts, names)
 
 
     
-![png](lab_files/lab_16_0.png)
+![png](lab_files/lab_17_0.png)
     
 
 
@@ -353,13 +358,13 @@ result = attempt_restore_memory(selected_arts, "Pacman", names=names, net=net)
 
 
     
-![png](lab_files/lab_25_0.png)
+![png](lab_files/lab_26_0.png)
     
 
 
 
     
-![png](lab_files/lab_25_1.png)
+![png](lab_files/lab_26_1.png)
     
 
 
@@ -379,13 +384,13 @@ result = attempt_restore_memory(random_static_images, 0, net=net, damage_type="s
 
 
     
-![png](lab_files/lab_27_1.png)
+![png](lab_files/lab_28_1.png)
     
 
 
 
     
-![png](lab_files/lab_27_2.png)
+![png](lab_files/lab_28_2.png)
     
 
 
@@ -455,7 +460,7 @@ plt.imshow(images[0].reshape(128, 128))
 
 
     
-![png](lab_files/lab_33_1.png)
+![png](lab_files/lab_34_1.png)
     
 
 
@@ -502,7 +507,7 @@ result = attempt_restore_memory(images, 9, net=net, continuous=True, damage_type
 
 
     
-![png](lab_files/lab_36_0.png)
+![png](lab_files/lab_37_0.png)
     
 
 

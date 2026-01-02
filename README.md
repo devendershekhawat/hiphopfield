@@ -27,9 +27,39 @@ In essence, the Energy Function is the compass that guides the network. It assig
 
 We will come back to the energy part later but first, let's understand how this Weight paramter is calculated.
 
+```python
+import numpy as np
+
+# Let's create two memory vectors. They will be binary vectors of size 10 witth values of +1 and -1.
+memory1 = np.array([1, -1, 1, -1, 1, -1, 1, -1, 1, -1])
+memory2 = np.array([1, 1, 1, 1, 1, -1, -1, -1, -1, -1])
+
+```
+
 #### Calculating the weights of the network
 
 The core of the Hopfield network lies in its weights ($W$), which represent the connection strength between any two neurons, $i$ and $j$. In our binary network, where neurons take values of $+1$ or $-1$, the weight matrix is a square grid of size $N \times N$.We calculate these weights using a rule borrowed from neuroscience, famously summarized by Donald Hebb: "Neurons that fire together, wire together." Known as Hebbian Learning, this rule states that if two neurons activate simultaneously, their connection strengthens. In mathematical terms, the weight contribution is simply the product of the two neuron values:Agreement ($+1, +1$ or $-1, -1$): The product is positive ($+1$). The connection is strengthened (excitatory).Disagreement ($+1, -1$): The product is negative ($-1$). The connection is weakened (inhibitory).To calculate the weights for the entire network, we use the Outer Product. For a single memory vector $\mathbf{x}$, the weight matrix is $\mathbf{x}\mathbf{x}^T$. However, since we want to store multiple memories, we sum these matrices together. The final weight matrix $W$ becomes a superposition of all stored patterns:$$W = \frac{1}{N} \sum_{k=1}^{M} \mathbf{x}^{(k)} (\mathbf{x}^{(k)})^T$$(Note: We explicitly set the diagonal $W_{ii} = 0$, as neurons do not connect to themselves).This matrix $W$ serves as the physical archive of our memories. It encapsulates the statistical correlations of every pattern we have ever shown the network, allowing it to reconstruct the whole from a part.
+
+```python
+Weights_A = np.outer(memory1, memory1)
+Weights_B = np.outer(memory2, memory2)
+np.fill_diagonal(Weights_A, 0)
+np.fill_diagonal(Weights_B, 0)
+
+Network_Weights = Weights_A + Weights_B
+Network_Weights
+```
+
+    array([[ 0,  0,  2,  0,  2, -2,  0, -2,  0, -2],
+           [ 0,  0,  0,  2,  0,  0, -2,  0, -2,  0],
+           [ 2,  0,  0,  0,  2, -2,  0, -2,  0, -2],
+           [ 0,  2,  0,  0,  0,  0, -2,  0, -2,  0],
+           [ 2,  0,  2,  0,  0, -2,  0, -2,  0, -2],
+           [-2,  0, -2,  0, -2,  0,  0,  2,  0,  2],
+           [ 0, -2,  0, -2,  0,  0,  0,  0,  2,  0],
+           [-2,  0, -2,  0, -2,  2,  0,  0,  0,  2],
+           [ 0, -2,  0, -2,  0,  0,  2,  0,  0,  0],
+           [-2,  0, -2,  0, -2,  2,  0,  2,  0,  0]])
 
 This is an abstract representation of the network with 8 neurons and 64 synapses (connections). Each connection will have a positive or negative weight. For connections with positive weight both neurons will have same activations.
 
@@ -42,7 +72,10 @@ Now that we have the weights, we can define the overall energy of the network. R
 - **Learned Memory:** The energy is low (the system is stable).
 - **Noisy/Faint Pattern:** The energy is high (the system is unstable/under tension).
 
-With this intuition, we can see how the overall energy landscape is a function of $N$ values, where $N$ is the number of neurons. In this high-dimensional landscape, if we stand at a random point, we are at the coordinates of either a stored memory (a valley), random noise (a peak), or somewhere in between.Mathematically, the energy $E$ of a state vector $\mathbf{s}$ is defined as:$$E = -\frac{1}{2} \sum_{i=1}^{N} \sum_{j=1}^{N} W_{ij} s_i s_j$$
+With this intuition, we can see how the overall energy landscape is a function of $N$ values, where $N$ is the number of neurons. In this high-dimensional landscape, if we stand at a random point, we are at the coordinates of either a stored memory (a valley), random noise (a peak), or somewhere in between.Mathematically, the energy $E$ of a state vector $\mathbf{s}$ is defined as:
+
+$$E = -\frac{1}{2} \sum_{i,j} w_{ij} s_i s_j$$
+
 Let's break down this formula to see why it works:
 
 1. The Interaction ($W_{ij} s_i s_j$): This term checks for consistency. If two neurons have a positive weight ($W_{ij} > 0$) and they have the same sign ($s_i s_j > 0$), the result is a large positive number. This represents "Harmony."
@@ -50,6 +83,20 @@ Let's break down this formula to see why it works:
 3. The Halving ($\frac{1}{2}$): Since the summation counts every pair twice (once for $i \to j$ and once for $j \to i$), we divide by 2 to get the true energy of the system.
 
 If you feed the network a noisy version of a memory, the neurons will clash with the weights (disharmony). This results in a high energy value. The network will then naturally flip neurons to lower this energy, sliding down the landscape until it lands in the nearest memory valley.
+
+```python
+# Function to calculate the energy of the network with respect to a given state
+def calculate_network_energy(state, weights):
+    return -0.5 * np.dot(state, np.dot(weights, state))
+
+energy_A = calculate_network_energy(memory1, Network_Weights) # energy of memory A (stable)
+energy_B = calculate_network_energy(memory2, Network_Weights) # energy of memory B (stable)
+
+energy_unstable = calculate_network_energy(np.array([-1, -1, -1, -1, -1, -1, -1, -1, -1, -1]), Network_Weights) # energy of memory A (unstable)
+energy_A, energy_B, energy_unstable # We see that energy of unstable state is higher than the energy of the memories.
+```
+
+    (np.float64(-42.0), np.float64(-42.0), np.float64(10.0))
 
 #### How a noisy input makes the network retrieve a learned memory?
 
@@ -101,6 +148,21 @@ This "frozen" state is the **Attractor**. Because we constructed the weight matr
 
 ![](./lab_files/tension.png)
 
+```python
+# Let's see how the network converges to the memory A given a noisy input that is close to memory A.
+
+# Let's create a noisy input that is close to memory A.
+noisy_input = np.array([1, -1, 1, -1, 1, -1, 1, 1, 1, 1])
+
+# Let's update the state based on update rule.
+new_state = np.sign(np.dot(Network_Weights, noisy_input))
+print(new_state == memory1) # We see that the network converges to memory A.
+
+# For inputs with higher dimensions and more noise we update the state multiple times by selecting a random neuron to update.
+```
+
+    [ True  True  True  True  True  True  True  True  True  True]
+
 #### The "Ghost" Memories (Spurious States)
 
 While the Hopfield Network is powerful, it has a haunting side effect. Sometimes, the network converges to a stable state that you **never taught it**. These are called **Spurious States** (or "Ghost Memories").
@@ -132,312 +194,310 @@ Imagine you teach it a "Dog" and a "Cat." Ideally, these are two distinct valley
 
 - **Why it happens:** The network is trying to satisfy the constraints of Pattern A _and_ Pattern B simultaneously, getting stuck in a local minimum where it partially satisfies both but fully satisfies neither.
 
-#### 3. The Capacity Limit
-
-These ghosts become much more frequent if you overload the network. A standard Hopfield network has a severe storage limit.
-
-- **The Rule of Thumb:** You can only store approximately **0.14N** patterns (where N is the number of neurons) before the "ghosts" take over and the system loses its ability to recall anything correctly. How we came to this number is out of scope for this essay but remember that it is not a magic number, but derived from the rules of statistics.
-- For a 100-neuron network, you can only safely store about 14 distinct memories. Beyond that, the energy landscape becomes too rugged, full of false valleys and confusion.
-
 #### Overcoming the limits
 
 This concept of energy landscape and the method of retrieving memories was descriped in Hopfields 1982 paper [Neural networks and physical systems with emergent collective computational abilities.](https://www.pnas.org/doi/10.1073/pnas.79.8.2554) As we saw this model has limits for the number of memories that can be learned.
 
 In 2020, John Hopfield published another paper [LARGE ASSOCIATIVE MEMORY PROBLEM IN NEUROBIOLOGY AND MACHINE LEARNING](https://arxiv.org/pdf/2008.06996) where he proposed a ground breaking solution that exponentially increased the memory limit. We call it a Modern Hopfield Network
 
+### Let's use this simple hopfield network to store some complex memories
+
 ```python
+# Necessary imports
 import numpy as np
 import matplotlib.pyplot as plt
 ```
 
-```python
+We create a class `SimpleHopfieldRestoration` to track the restoration process
 
+```python
+import matplotlib.gridspec as gridspec
+from utils import get_accuracy
+
+# The state of the network for a given memory
+class State:
+  value: np.ndarray # Value of the memory vector
+  energy: float # Energy of the network for the given memory vector
+  accuracy: float # Accuracy of the network for the given memory vector with respect to the original memory
+  def __init__(self, value: np.ndarray, energy: float, accuracy: float):
+    self.value = value
+    self.energy = energy
+    self.accuracy = accuracy
+
+# The entity to track the restoration process
+class SimpleHopefieldRestoration:
+  def __init__(self, W: np.ndarray, original_state: np.ndarray, input_state: np.ndarray):
+    self.W = W # Weight matrix of the network
+    self.original_state = original_state # Original memory
+    self.states = [] # List to store the state of the network for each iteration
+    # We initialize the state of the network with the input state
+    self.states.append(State(
+      input_state.copy(),
+      self.calculate_energy(input_state.copy()),
+      get_accuracy(original_state, input_state.copy()))
+    )
+
+  def calculate_energy(self, state: np.ndarray):
+    """Calculate the energy of the network for a given state"""
+    return -0.5 * np.dot(state, np.dot(self.W, state))
+
+  def add_state(self, state: np.ndarray):
+    """Add a new state to the restoration process"""
+    self.states.append(State(
+      state.copy(),
+      self.calculate_energy(state.copy()),
+      get_accuracy(self.original_state, state.copy()))
+    )
+
+  def plot_restoration(self):
+    """Plot the restoration process"""
+    num_states = len(self.states)
+    fig = plt.figure(figsize=(20, 15))
+    gs = gridspec.GridSpec(3, 4, height_ratios=[2, 2, 1])
+
+    img_shape = int(np.sqrt(self.original_state.shape[0]))
+
+    # Row 1: 4 images
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax1.set_title("Original Image")
+    ax1.imshow(self.original_state.reshape(img_shape, img_shape), cmap="plasma")
+    ax1.axis('off')
+
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax2.set_title("Input")
+    ax2.imshow(self.states[0].value.reshape(img_shape, img_shape), cmap="plasma")
+    ax2.axis('off')
+
+    ax3 = fig.add_subplot(gs[0, 2])
+    early_idx = int(num_states // 3)
+    ax3.set_title("Early Recall")
+    ax3.imshow(self.states[early_idx].value.reshape(img_shape, img_shape), cmap="plasma")
+    ax3.axis('off')
+
+    ax4 = fig.add_subplot(gs[0, 3])
+    late_idx = int(2 * num_states // 3)
+    ax4.set_title("Late Recall")
+    ax4.imshow(self.states[late_idx].value.reshape(img_shape, img_shape), cmap="plasma")
+    ax4.axis('off')
+
+    # Row 2: Restored image, Final energy/accuracy text
+    ax5 = fig.add_subplot(gs[1, 0:2])
+    ax5.set_title("Restored Image")
+    ax5.imshow(self.states[-1].value.reshape(img_shape, img_shape), cmap="plasma")
+    ax5.axis('off')
+
+    ax6 = fig.add_subplot(gs[1, 2:4])
+    ax6.axis('off')
+    final_energy = self.states[-1].energy
+    final_accuracy = self.states[-1].accuracy
+    ax6.text(0.5, 0.7, f"Final Energy:\n{final_energy:.2f}", ha='center', va='center', fontsize=26, weight='bold', color='darkblue', transform=ax6.transAxes)
+    ax6.text(0.5, 0.3, f"Final Accuracy:\n{final_accuracy*100:.2f}%", ha='center', va='center', fontsize=26, weight='bold', color='darkgreen', transform=ax6.transAxes)
+
+    # Row 3: Energies and Accuracies
+    ax7 = fig.add_subplot(gs[2, 0:2])
+    energies = [state.energy for state in self.states]
+    ax7.plot(energies, marker='o', color='purple')
+    ax7.set_title("Energy Across Iterations")
+    ax7.set_xlabel("Iteration")
+    ax7.set_ylabel("Energy")
+
+    ax8 = fig.add_subplot(gs[2, 2:4])
+    accuracies = [state.accuracy for state in self.states]
+    ax8.plot([a * 100 for a in accuracies], marker='o', color='teal')
+    ax8.set_title("Accuracy Across Iterations")
+    ax8.set_xlabel("Iteration")
+    ax8.set_ylabel("Accuracy (%)")
+
+    plt.tight_layout()
+    plt.show()
+```
+
+Next, let's create a `SimpleHopfieldNetwork` that will be trained on a set of memories. We will train it to store 2-dimensional binary images of +1s and -1s
+
+```python
+from utils import get_accuracy
+from BaseNetwork import BaseNetwork
+from SimpleHopefieldRestoration import SimpleHopefieldRestoration
+
+class SimpleHopfieldNetwork(BaseNetwork):
+    """
+    A simple NxN Hopfield network
+    """
+    def __init__(self, size):
+        self.size = size #Size of one side of the image
+        self.n = size * size #Total number of neurons in the network
+        self.W = np.zeros((self.n, self.n)) #Weight matrix of the network
+
+    def train(self, patterns):
+        """Train the network on a set of memories i.e. create a weight matrix"""
+        print(f"Learning {len(patterns)} memories with {self.n} neurons...")
+        print(f"Synaptic Connections: {self.n**2:,} weights.")
+        for p in patterns:
+            self.W += np.outer(p, p)
+        np.fill_diagonal(self.W, 0)
+        # We normalize the weights to keep the field values manageable
+        self.W /= self.n
+        return self.W
+
+    def energy(self, state):
+        """
+        Calculates the energy of the network for a given state
+        """
+        return -0.5 * np.dot(state, np.dot(self.W, state))
+
+    def get_field_map(self, state):
+        """
+        Returns the 'Pressure' map (What the neurons want to do)
+        For an entry at (i,j) the field vector tells us how much the neuron at (i,j) wants to be 1 or -1.
+        """
+        return np.dot(self.W, state)
+
+    def restore_memory(self, input_state, original_state, steps=50):
+        """Restore a memory from a noisy input"""
+        # Initialize the restoration process
+        restoration = SimpleHopefieldRestoration(self.W, original_state, input_state)
+        # Iterate over the number of steps. in each step we select a random neuron and update its value based on the field vector.
+        # We do it step*n times to ensure that the network has time to explore the state space.
+        for i in range(steps*self.n):
+            # Select a random neuron
+            idx = np.random.randint(self.n)
+            # copy over the previous state
+            new_value = restoration.states[-1].value.copy()
+            # calculate the field vector for the selected neuron
+            field = np.dot(self.W[idx], new_value)
+            # update the value of the selected neuron
+            new_value[idx] = 1 if field >= 0 else -1
+            # add the new state to the restoration process
+            restoration.add_state(new_value)
+        return restoration
 ```
 
 ```python
-SIZE = 32
-M = 3
+SIZE = 32 # Size of the image
+M = 3 # Number of memories to store
 ```
 
-```python
-def show_img(ax, flat_vec):
-    ax.imshow(flat_vec.reshape(SIZE, SIZE), cmap='plasma', vmin=-1, vmax=1)
-    ax.axis('off')
-```
+We will now import some arts which are 32x32 matrix of +1s and -1s
 
 ```python
 import art
+from utils import plot_selected_arts
 
-arts, names = art.create_arts()
+arts, names = art.create_arts() # Returns a list a tuple of (art, name)
+selected_arts = arts[:M] # Select the first M arts
 
-print("Arts shape:", arts)
-
-selected_arts = arts[:M]
-
-names = [name for _, name in selected_arts]
-selected_arts = [art for art, _ in selected_arts]
-```
-
-    Arts shape: [(array([-1., -1., -1., ..., -1., -1., -1.], shape=(1024,)), 'Heart'), (array([-1., -1., -1., ..., -1., -1., -1.], shape=(1024,)), 'Invader'), (array([-1., -1., -1., ..., -1., -1., -1.], shape=(1024,)), 'Pacman'), (array([-1., -1., -1., ..., -1., -1., -1.], shape=(1024,)), 'Ghost'), (array([-1., -1., -1., ..., -1., -1., -1.], shape=(1024,)), 'Yin Yang'), (array([-1., -1., -1., ..., -1., -1., -1.], shape=(1024,)), 'Mushroom'), (array([-1., -1., -1., ..., -1., -1., -1.], shape=(1024,)), 'Skull'), (array([-1., -1., -1., ..., -1., -1., -1.], shape=(1024,)), 'Tree'), (array([1., 1., 1., ..., 1., 1., 1.], shape=(1024,)), 'Creeper'), (array([-1., -1., -1., ..., -1., -1., -1.], shape=(1024,)), 'Sword')]
-
-```python
-def plot_selected_arts(selected_arts, names=None):
-  n = len(selected_arts)
-  cols = min(n, 5)
-  rows = (n + cols - 1) // cols
-  fig, axs = plt.subplots(rows, cols, figsize=(cols*2.5, rows*2.5))
-  fig.suptitle("Selected Memories to train hopfield network", fontsize=16)
-  for i in range(rows * cols):
-      ax = axs.flat[i] if n > 1 else axs
-      if i < n:
-          show_img(ax, selected_arts[i])
-          ax.set_title(f"{names[i] if names else f"Memory {i + 1}"}")
-      else:
-          ax.axis('off')
-  plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-  plt.show()
-```
-
-```python
+names = [name for _, name in selected_arts] # Extract the names of the selected arts
+selected_arts = [art for art, _ in selected_arts] # Extract the arts from the selected tuple
 plot_selected_arts(selected_arts, names)
 ```
 
-![png](lab_files/lab_17_0.png)
+![png](lab_files/lab_23_0.png)
 
 ```python
-from ModernHopFieldNetwork import ModernHopfieldNetwork
-from SimpleHopfieldNetwork import SimpleHopfieldNetwork
+# Create a simple hopfield network and train it on the selected arts
 
-# net = ModernHopfieldNetwork(SIZE)
 net = SimpleHopfieldNetwork(SIZE)
-```
-
-```python
 memory_matrix = net.train(selected_arts)
 ```
 
     Learning 3 memories with 1024 neurons...
     Synaptic Connections: 1,048,576 weights.
 
-```python
-memory_matrix
-```
-
-    array([[0.        , 0.00292969, 0.00292969, ..., 0.00292969, 0.00292969,
-            0.00292969],
-           [0.00292969, 0.        , 0.00292969, ..., 0.00292969, 0.00292969,
-            0.00292969],
-           [0.00292969, 0.00292969, 0.        , ..., 0.00292969, 0.00292969,
-            0.00292969],
-           ...,
-           [0.00292969, 0.00292969, 0.00292969, ..., 0.        , 0.00292969,
-            0.00292969],
-           [0.00292969, 0.00292969, 0.00292969, ..., 0.00292969, 0.        ,
-            0.00292969],
-           [0.00292969, 0.00292969, 0.00292969, ..., 0.00292969, 0.00292969,
-            0.        ]], shape=(1024, 1024))
+We will now pick a random image from the selected images and add some noise to it
 
 ```python
-def break_art_and_flattern(art, size=SIZE):
-    """Takes a 32x32 art and breaks it in half"""
-    # We take the Invader and WIPE OUT the right half
-    input_broken = art.copy()
-    reshaped = input_broken.reshape(SIZE, SIZE)
-    reshaped[:, SIZE//2:] = 0
-    plt.imshow(reshaped, cmap="plasma")
-    plt.title("Broken Art")
-    plt.show()
-    input_broken = reshaped.flatten()
-    return input_broken
-```
+from utils import break_art_and_flattern
 
-```python
-import numpy as np
+random_art = selected_arts[np.random.randint(len(selected_arts))]
+random_art_broken = break_art_and_flattern(random_art)
 
-def break_continuous_art(art, size=128, damage_type="alternating_right"):
-    """
-    Corrupts a continuous (grayscale) image.
-    args:
-        art: Flattened numpy array of the image
-        size: Width/Height of the image
-        damage_type: 'mask_right', 'mask_center', 'static', or 'alternating_right'
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.title("Original Art")
+plt.imshow(random_art.reshape(SIZE, SIZE), cmap='plasma', vmin=-1, vmax=1)
+plt.axis('off')
 
-        - 'mask_right': zero out right half
-        - 'mask_center': black out center square
-        - 'static': add gaussian noise
-        - 'alternating_right': alternate rows on right half set to 0
-    """
-    # 1. Reshape to 2D so we can manipulate regions
-    input_broken = art.copy().reshape(size, size)
+plt.subplot(1, 2, 2)
+plt.title("Broken Art")
+plt.imshow(random_art_broken.reshape(SIZE, SIZE), cmap='plasma', vmin=-1, vmax=1)
+plt.axis('off')
 
-    if damage_type == "mask_right":
-        # WIPE OUT the right half (Set to 0.0 or -1.0 depending on your data range)
-        # We use 0.0 (Gray) here as a "neutral" missing value
-        input_broken[:, size//2:] = 0.0
+plt.tight_layout()
+plt.show()
 
-    elif damage_type == "mask_center":
-        # Put a black box in the middle
-        margin = size // 4
-        input_broken[margin:-margin, margin:-margin] = 0.0
-
-    elif damage_type == "static":
-        # Add Gaussian Noise (The most common continuous test)
-        noise = np.random.normal(0, 0.4, (size, size)) # Mean 0, Sigma 0.4
-        input_broken = input_broken + noise
-        # Clip to keep values valid (e.g., between -1 and 1)
-        input_broken = np.clip(input_broken, -1.0, 1.0)
-
-    elif damage_type == "alternating_right":
-        # Left half stays the same, right half: set alternate rows to 0
-        # Loop through each row: for even rows (or odd, your choice), set right half to 0
-        for row in range(size):
-            if row % 2 == 0:
-                input_broken[row, size//2:] = 0.0
-
-    # 2. Flatten back to vector
-    return input_broken.flatten()
-```
-
-```python
-def attempt_restore_memory(
-        selected_arts,
-        nameorindex,
-        steps=50,
-        names=[],
-        net: ModernHopfieldNetwork | SimpleHopfieldNetwork | None = None,
-        continuous=False,
-        damage_type="alternating_right"
-    ):
-    if net is None:
-        net = ModernHopfieldNetwork(SIZE)
-        net.train(selected_arts)
-    result = {}
-    if isinstance(nameorindex, int):
-        art = selected_arts[nameorindex]
-    else:
-        art = selected_arts[names.index(nameorindex)]
-        name = nameorindex
-        result["name"] = name
-    broken_and_flattened = break_art_and_flattern(art) if not continuous else break_continuous_art(art, damage_type=damage_type)
-    restoration = net.restore_memory(broken_and_flattened, art, steps=steps)
-    restoration.plot_restoration()
-    return restoration
-```
-
-```python
-names
-```
-
-    ['Heart', 'Invader', 'Pacman']
-
-```python
-result = attempt_restore_memory(selected_arts, "Pacman", names=names, net=net)
 ```
 
 ![png](lab_files/lab_26_0.png)
 
-![png](lab_files/lab_26_1.png)
+Let's see how our attempt to retore this broken memory into a complete one goes.
+
+```python
+restoration = net.restore_memory(random_art_broken, random_art)
+restoration.plot_restoration()
+
+```
+
+![png](lab_files/lab_28_0.png)
+
+#### A ghost!
+
+This happened because most of our images share a lot in common. it's either mostly background or mostly foreground. Even though we acheived a lower energy, because of the simmilarities in the original set of memories, the valleys in the energy landscape lies so closer to each other that there are some hidden valleys where ghost memories, a mixture of memories live.
 
 ### Let's try with random static patterns
 
+We try with random patterns to see if the randomness eliminates the closeness of the memory vectors
+
 ```python
-random_static_images = art.get_random_binary_images(SIZE, 10)
+random_static_images = art.get_random_binary_images(SIZE, 10) # We get 10 random static patterns
 net = SimpleHopfieldNetwork(SIZE)
-net.train(random_static_images)
-result = attempt_restore_memory(random_static_images, 0, net=net, damage_type="static")
+memory_matrix = net.train(random_static_images)
 ```
 
     Learning 10 memories with 1024 neurons...
     Synaptic Connections: 1,048,576 weights.
 
-![png](lab_files/lab_28_1.png)
-
-![png](lab_files/lab_28_2.png)
-
 ```python
-random_static_images[0].shape
+memory_matrix.shape
 ```
 
-    (1024,)
-
-### Let's test with random images
+    (1024, 1024)
 
 ```python
-SIZE = 128
+# Select a random image from the set of random static images
+random_static_image = random_static_images[np.random.randint(len(random_static_images))]
+# Break the image and flatten it
+random_static_image_broken = break_art_and_flattern(random_static_image)
+
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.title("Original Art")
+plt.imshow(random_static_image.reshape(SIZE, SIZE), cmap='plasma', vmin=-1, vmax=1)
+plt.axis('off')
+
+plt.subplot(1, 2, 2)
+plt.title("Broken Art")
+plt.imshow(random_static_image_broken.reshape(SIZE, SIZE), cmap='plasma', vmin=-1, vmax=1)
+plt.axis('off')
+
+plt.tight_layout()
+plt.show()
 ```
+
+![png](lab_files/lab_33_0.png)
 
 ```python
-import os
-from PIL import Image
-import numpy as np
-
-# Path to assets directory
-assets_folder = "assets"
-
-images = []
-for filename in os.listdir(assets_folder):
-    if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
-        image_path = os.path.join(assets_folder, filename)
-        img = Image.open(image_path).convert("L").resize((128, 128))
-        img_array = np.array(img)
-        images.append(img_array.flatten())
-
-images = np.array(images)  # Shape: (num_images, 128, 128)
+restoration = net.restore_memory(random_static_image_broken, random_static_image)
+restoration.plot_restoration()
 
 ```
 
-```python
-images[0].shape
-```
+![png](lab_files/lab_34_0.png)
 
-    (16384,)
+### A 100% accuracy
 
-```python
-plt.imshow(images[0].reshape(128, 128))
-```
+#### The Capacity Limit
 
-    <matplotlib.image.AxesImage at 0x1409d39d0>
+These ghosts become much more frequent if you overload the network. A standard Hopfield network has a severe storage limit.
 
-![png](lab_files/lab_34_1.png)
-
-```python
-from ModernHopFieldNetwork import ModernHopfieldNetwork
-from SimpleHopfieldNetwork import SimpleHopfieldNetwork
-
-net = ModernHopfieldNetwork(SIZE, binary=False, beta=100)
-```
-
-```python
-net.train_normalized(images)
-```
-
-    Learning 19 memories with 16384 neurons...
-    Memory matrix shape: (19, 16384)
-
-
-
-
-
-    array([[0.01145039, 0.01145039, 0.01145039, ..., 0.00569699, 0.00586621,
-            0.00592262],
-           [0.01160724, 0.01160724, 0.01165462, ..., 0.00758024, 0.00772237,
-            0.00720123],
-           [0.01038266, 0.01028331, 0.01023363, ..., 0.00183808, 0.00099356,
-            0.00149033],
-           ...,
-           [0.007138  , 0.00816587, 0.00788035, ..., 0.01210604, 0.01210604,
-            0.01216315],
-           [0.00919188, 0.00923738, 0.00923738, ..., 0.00796326, 0.00796326,
-            0.00800876],
-           [0.00906444, 0.00701043, 0.00634064, ..., 0.00727835, 0.00763556,
-            0.00768022]], shape=(19, 16384))
-
-```python
-result = attempt_restore_memory(images, 9, net=net, continuous=True, damage_type="mask_right")
-```
-
-![png](lab_files/lab_37_0.png)
-
-```python
-
-```
+- **The Rule of Thumb:** You can only store approximately **0.14N** patterns (where N is the number of neurons) before the "ghosts" take over and the system loses its ability to recall anything correctly. How we came to this number is out of scope for this essay but remember that it is not a magic number, but derived from the rules of statistics.
+- For a 100-neuron network, you can only safely store about 14 distinct memories. Beyond that, the energy landscape becomes too rugged, full of false valleys and confusion.

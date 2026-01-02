@@ -200,12 +200,6 @@ Imagine you teach it a "Dog" and a "Cat." Ideally, these are two distinct valley
 
 * **Why it happens:** The network is trying to satisfy the constraints of Pattern A *and* Pattern B simultaneously, getting stuck in a local minimum where it partially satisfies both but fully satisfies neither.
 
-#### 3. The Capacity Limit
-These ghosts become much more frequent if you overload the network. A standard Hopfield network has a severe storage limit.
-
-* **The Rule of Thumb:** You can only store approximately **0.14N** patterns (where N is the number of neurons) before the "ghosts" take over and the system loses its ability to recall anything correctly. How we came to this number is out of scope for this essay but remember that it is not a magic number, but derived from the rules of statistics.
-* For a 100-neuron network, you can only safely store about 14 distinct memories. Beyond that, the energy landscape becomes too rugged, full of false valleys and confusion.
-
 #### Overcoming the limits
 This concept of energy landscape and the method of retrieving memories was descriped in Hopfields 1982 paper [Neural networks and physical systems with emergent collective computational abilities.](https://www.pnas.org/doi/10.1073/pnas.79.8.2554) As we saw this model has limits for the number of memories that can be learned.
 
@@ -542,3 +536,11 @@ restoration.plot_restoration()
 
 
 ### A 100% accuracy
+
+#### The Capacity Limit
+These ghosts become much more frequent if you overload the network. A standard Hopfield network has a severe storage limit.
+
+* **The Rule of Thumb:** You can only store approximately **0.14N** patterns (where N is the number of neurons) before the "ghosts" take over and the system loses its ability to recall anything correctly. How we came to this number is out of scope for this essay but remember that it is not a magic number, but derived from the rules of statistics.
+* For a 100-neuron network, you can only safely store about 14 distinct memories. Beyond that, the energy landscape becomes too rugged, full of false valleys and confusion.
+
+

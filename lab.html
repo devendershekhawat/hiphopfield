@@ -7821,7 +7821,7 @@ all of MD as it is not optimized for dense, information rich UIs.
               class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput"
               data-mime-type="text/markdown"
             >
-              <p><img alt="" src="./lab_files/energy_landcape.jpg" /></p>
+              <p><img alt="" src="./lab_files/energy_landscape.jpg" /></p>
             </div>
           </div>
         </div>
@@ -8479,33 +8479,6 @@ array([[ 0,  0,  2,  0,  2, -2,  0, -2,  0, -2],
                   satisfy the constraints of Pattern A <em>and</em> Pattern B
                   simultaneously, getting stuck in a local minimum where it
                   partially satisfies both but fully satisfies neither.
-                </li>
-              </ul>
-              <h4 id="3.-The-Capacity-Limit">
-                3. The Capacity Limit<a
-                  class="anchor-link"
-                  href="#3.-The-Capacity-Limit"
-                  >¶</a
-                >
-              </h4>
-              <p>
-                These ghosts become much more frequent if you overload the
-                network. A standard Hopfield network has a severe storage limit.
-              </p>
-              <ul>
-                <li>
-                  <strong>The Rule of Thumb:</strong> You can only store
-                  approximately <strong>0.14N</strong> patterns (where N is the
-                  number of neurons) before the "ghosts" take over and the
-                  system loses its ability to recall anything correctly. How we
-                  came to this number is out of scope for this essay but
-                  remember that it is not a magic number, but derived from the
-                  rules of statistics.
-                </li>
-                <li>
-                  For a 100-neuron network, you can only safely store about 14
-                  distinct memories. Beyond that, the energy landscape becomes
-                  too rugged, full of false valleys and confusion.
                 </li>
               </ul>
             </div>
@@ -9384,6 +9357,51 @@ Synaptic Connections: 1,048,576 weights.
                   >¶</a
                 >
               </h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="jp-Cell jp-MarkdownCell jp-Notebook-cell"
+        id="cell-id=abc7457d"
+      >
+        <div class="jp-Cell-inputWrapper" tabindex="0">
+          <div
+            class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser"
+          ></div>
+          <div class="jp-InputArea jp-Cell-inputArea">
+            <div class="jp-InputPrompt jp-InputArea-prompt"></div>
+            <div
+              class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput"
+              data-mime-type="text/markdown"
+            >
+              <h4 id="The-Capacity-Limit">
+                The Capacity Limit<a
+                  class="anchor-link"
+                  href="#The-Capacity-Limit"
+                  >¶</a
+                >
+              </h4>
+              <p>
+                These ghosts become much more frequent if you overload the
+                network. A standard Hopfield network has a severe storage limit.
+              </p>
+              <ul>
+                <li>
+                  <strong>The Rule of Thumb:</strong> You can only store
+                  approximately <strong>0.14N</strong> patterns (where N is the
+                  number of neurons) before the "ghosts" take over and the
+                  system loses its ability to recall anything correctly. How we
+                  came to this number is out of scope for this essay but
+                  remember that it is not a magic number, but derived from the
+                  rules of statistics.
+                </li>
+                <li>
+                  For a 100-neuron network, you can only safely store about 14
+                  distinct memories. Beyond that, the energy landscape becomes
+                  too rugged, full of false valleys and confusion.
+                </li>
+              </ul>
             </div>
           </div>
         </div>

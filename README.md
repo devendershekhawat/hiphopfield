@@ -14,7 +14,7 @@ How did your brain do that? You only heard a fragment of an instrumental melody,
 
 When a computer retrieves a memory, the CPU must know the data's exact physical address on the disk. Your brain, however, operates on a completely different architecture. It consists of nearly 86 billion neurons, none of which settle into a permanent, static state. Instead, they constantly activate and deactivate at rapid speeds through electrical bursts known as 'action potentials.' Unlike a hard drive, your brain does not store memories by permanently imprinting them onto a physical medium; the storage is dynamic. How do we model this biological architecture mathematically? We need a system where memories are not found by address, but by content—where a noisy, faint fragment (like that piano melody) is enough to reconstruct the whole. In computer science, this is known as Associative Memory or Content-Addressable Memory. To achieve this, physicist John Hopfield proposed a brilliant idea: he argued that we can treat memories not as data in a drawer, but as stable valleys on an energy surface.
 
-![](./lab_files/energy_landcape.jpg)
+![](./lab_files/energy_landscape.jpg)
 
 ### Valley of a memory
 
@@ -408,7 +408,7 @@ We will now pick a random image from the selected images and add some noise to i
 ```python
 from utils import break_art_and_flattern
 
-random_art = selected_arts[np.random.randint(len(selected_arts))]
+random_art = selected_arts[0]
 random_art_broken = break_art_and_flattern(random_art)
 
 plt.figure(figsize=(10, 5))
